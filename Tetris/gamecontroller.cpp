@@ -68,6 +68,7 @@ void GameController::handleKeyPressed(QKeyEvent *event)
                 break;
             case Qt::Key_Down:
                 currentTetris->setDirection(TETRIS_DOWN);
+                currentTetris->moveDown();
                 break;
             case Qt::Key_Space:
                 pause();
@@ -105,15 +106,6 @@ bool GameController::eventFilter(QObject *object, QEvent *event)
     if (event->type() == QEvent::KeyPress) {
         handleKeyPressed((QKeyEvent *)event);
         return true;
-    } else if (event->type() == QEvent::Timer){
-        qDebug() << "timer event";
-        currentTetris->moveDown();
-        if (currentTetris->collidesWithItem(wBottom)) {
-            currentTetris->moveUp();
-            currentTetris->setStop(true);
-            return true;
-        }
-        return QObject::eventFilter(object,event);
     } else {
         return QObject::eventFilter(object, event);
     }
@@ -142,23 +134,51 @@ void GameController::newTetris()
 
 bool GameController::handleColliding(tetris *te)
 {
-    qDebug() << "handle colliding";
+    bool ret = false;
     if (wTop->collidesWithItem(te)){
         gameOver();
         return true;
     }
 
     if (wBottom->collidesWithItem(te)) {
-        return true;
+        ret = true;
     }
 
-    for (int i = 0; i < tetrisList.size(); i++) {
-        if (te->collidesWithItem(tetrisList[i])) {
-            return true;
+    for (int i = 0;!ret &&  i < tetrisList.size(); i++) {
+        if (te->collidingWithTetris(tetrisList[i])) {
+            ret =  true;
+            break;
         }
     }
 
-    return false;
+    // check all values are online
+    qreal x = -90;
+    qreal y = 80;
+    qreal w = 180;
+    qreal h = 10;
+    qreal stepw = 10;
+    qreal i;
+
+    tetrisList.push_back(te);
+    for ( i = x; i < x + w; i += stepw){
+        QPointF p(x+stepw/2,y+h/2);
+        for (int i = 0; i < tetrisList.size(); i++){
+            if (!tetrisList[i]->contains(p))
+                break;
+        }
+
+        if (i < tetrisList.size()) break;
+    }
+
+    tetrisList.pop_back();
+    if (i >= x + w) {
+        qDebug() << "line complete";
+
+        for (int i = 0; i < tetrisList.size(); i++) {
+            tetrisList[i]->moveDown();
+        }
+    }
+    return ret;
 }
 
 

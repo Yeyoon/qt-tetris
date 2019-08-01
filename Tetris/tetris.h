@@ -42,6 +42,9 @@ public:
 
     void setStop(bool s);
     void setDirection(Tetris_Direction d);
+
+    bool collidingWithTetris(tetris *other);
+    QList<QRectF> collectingRects();
 private:
     QPointF location;
     Tetris_type myType;

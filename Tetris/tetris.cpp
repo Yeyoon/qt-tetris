@@ -71,7 +71,7 @@ void tetris::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
     (void)widget;
     painter->save();
     QPen pen(Qt::black);
-    pen.setWidth(1);
+    //pen.setWidth(1);
     painter->setPen(pen);
     painter->setBrush(myColor);
 
@@ -101,7 +101,6 @@ QPainterPath tetris::shape() const
         }
     }
 
-    qDebug() << path;
     return path;
 }
 
@@ -125,10 +124,12 @@ void tetris::advance(int step)
             moveRight();
             break;
         default:
-            moveDown();    
+            //moveDown();
+            break;
         }
 
-        setPos(location);
+
+        qDebug() << location;
         if (game->handleColliding(this))
             isStop = true;
 
@@ -138,7 +139,7 @@ void tetris::advance(int step)
 
     }
 
-
+    setPos(location);
 }
 
 void tetris::setStop(bool s)
@@ -153,6 +154,8 @@ void tetris::moveLeft()
     if (wLeft->collidesWithItem(this)) {
         location.rx() += BOXSIZE;
     }
+
+    direction = TETRIS_DOWN;
 }
 
 void tetris::moveDown()
@@ -171,6 +174,8 @@ void tetris::moveRight()
     if (wRight->collidesWithItem(this)){
         location.rx() -= BOXSIZE;
     }
+
+    direction = TETRIS_DOWN;
 }
 
 void tetris::moveUp()
@@ -181,4 +186,46 @@ void tetris::moveUp()
 void tetris::setDirection(Tetris_Direction d)
 {
     direction = d;
+}
+
+QList<QRectF> tetris::collectingRects()
+{
+    QList<QRectF> q;
+    qreal x = location.x();
+    qreal y = location.y();
+
+    for (int i = 0; i < 0xf; i++){
+        if (locationBits & (1 << i)) {
+            int yl = i / TETRIS_W;
+            int xl = i % TETRIS_W;
+
+            qreal xt = x + xl * BOXSIZE;
+            qreal yt = y + yl * BOXSIZE;
+
+            q.push_back(QRectF(xt,yt,BOXSIZE,BOXSIZE));
+        }
+    }
+
+    return q;
+}
+
+bool tetris::collidingWithTetris(tetris *other)
+{
+    QList<QRectF> q = collectingRects();
+    QList<QRectF> p = other->collectingRects();
+
+    for (int i = 0; i < q.size(); i++) {
+        QRectF xp = q[i];
+        xp.setHeight(xp.height() + 1);
+
+        for (int j = 0; j < p.size(); j++) {
+            QRectF yp = p[j];
+            yp.setHeight(yp.height()+1);
+
+            if (xp.intersects(yp))
+                return true;
+        }
+    }
+
+    return false;
 }
