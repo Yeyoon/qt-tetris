@@ -82,7 +82,8 @@ void GameController::addNewFood()
 
 void GameController::gameOver()
 {
-
+    qDebug() << "Game over";
+    pause();
 }
 
 void GameController::pause()
@@ -137,6 +138,27 @@ void GameController::newTetris()
                                wShadow);
 
     scene.addItem(currentTetris);
+}
+
+bool GameController::handleColliding(tetris *te)
+{
+    qDebug() << "handle colliding";
+    if (wTop->collidesWithItem(te)){
+        gameOver();
+        return true;
+    }
+
+    if (wBottom->collidesWithItem(te)) {
+        return true;
+    }
+
+    for (int i = 0; i < tetrisList.size(); i++) {
+        if (te->collidesWithItem(tetrisList[i])) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 

@@ -9,7 +9,7 @@ const int TETRIS_W = 4;
 const int TETRIS_H_ = 4;
 
 tetris::tetris(const Tetris_type &t, GameController *game,Wall *top, Wall *l, Wall *r, Wall *b):
-    location(QPointF(0,-100)),
+    location(QPointF(0,-90)),
     myType(t),
     isStop(false),
     game(game),
@@ -107,8 +107,11 @@ QPainterPath tetris::shape() const
 
 void tetris::advance(int step)
 {
-    if (!step)
+    if (!step) {
+        if (game->handleColliding(this))
+            isStop = true;
         return;
+    }
 
     if (tickCnt++ % speed)
         return;
@@ -126,8 +129,13 @@ void tetris::advance(int step)
         }
 
         setPos(location);
+        if (game->handleColliding(this))
+            isStop = true;
+
         if (isStop)
             game->stopTetris(this);
+
+
     }
 
 

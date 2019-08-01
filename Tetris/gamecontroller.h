@@ -23,6 +23,8 @@ public:
     void stopTetris(tetris *te);
     void newTetris();
 
+    bool handleColliding(tetris *te);
+
 public slots:
     void pause();
     void resume();
