@@ -20,6 +20,9 @@ public:
 //    void snakeHitWall(Snake *snake, Wall *wall);
     void snakeAteItself();
 
+    void stopTetris(tetris *te);
+    void newTetris();
+
 public slots:
     void pause();
     void resume();
@@ -42,6 +45,10 @@ private:
     Wall *wLeft;
     Wall *wRight;
     Wall *wBottom;
+
+    Wall *wShadow;
+
+    QList<tetris*> tetrisList;
 };
 
 #endif // GAMECONTROLLER_H

@@ -2,6 +2,7 @@
 #include <QGraphicsScene>
 #include <QKeyEvent>
 #include <QMessageBox>
+#include <QDebug>
 
 #include "gamecontroller.h"
 #include "tetris.h"
@@ -16,15 +17,24 @@ GameController::GameController(QGraphicsScene &scene, QObject *parent) :
 
     wTop = new Wall(-100,-100,200,10);
     wLeft = new Wall(-100,-100,10,200);
-    wRight = new Wall(80,-100,10,200);
+    wRight = new Wall(90,-100,10,200);
     wBottom = new Wall(-100,90,200,10);
+
+    wShadow = new Wall(-90,80,180,10,Qt::gray);
 
     scene.addItem(wTop);
     scene.addItem(wLeft);
     scene.addItem(wRight);
     scene.addItem(wBottom);
+    scene.addItem(wShadow);
+
     Tetris_type ty = (Tetris_type)(TETRIS_TYPE_1 + (qrand() % TETRIS_TYPE_END));
-    currentTetris = new tetris(ty);
+    currentTetris = new tetris(ty,
+                               this,
+                               wTop,
+                               wLeft,
+                               wRight,
+                               wShadow);
     scene.addItem(currentTetris);
 
     scene.installEventFilter(this);
@@ -51,16 +61,13 @@ void GameController::handleKeyPressed(QKeyEvent *event)
     if (!isPause)
         switch (event->key()) {
             case Qt::Key_Left:
-                if (!currentTetris->collidesWithItem(wLeft))
-                    currentTetris->moveLeft();
+                currentTetris->setDirection(TETRIS_LEFT);
                 break;
             case Qt::Key_Right:
-                if (!currentTetris->collidesWithItem(wRight))
-                    currentTetris->moveRight();
+                currentTetris->setDirection(TETRIS_RIGHT);
                 break;
             case Qt::Key_Down:
-                if (!currentTetris->collidesWithItem(wBottom))
-                    currentTetris->moveDown();
+                currentTetris->setDirection(TETRIS_DOWN);
                 break;
             case Qt::Key_Space:
                 pause();
@@ -97,7 +104,39 @@ bool GameController::eventFilter(QObject *object, QEvent *event)
     if (event->type() == QEvent::KeyPress) {
         handleKeyPressed((QKeyEvent *)event);
         return true;
+    } else if (event->type() == QEvent::Timer){
+        qDebug() << "timer event";
+        currentTetris->moveDown();
+        if (currentTetris->collidesWithItem(wBottom)) {
+            currentTetris->moveUp();
+            currentTetris->setStop(true);
+            return true;
+        }
+        return QObject::eventFilter(object,event);
     } else {
         return QObject::eventFilter(object, event);
     }
 }
+
+void GameController::stopTetris(tetris* te)
+{
+    qDebug() << "stop tetris";
+
+    newTetris();
+}
+
+void GameController::newTetris()
+{
+    tetrisList.push_back(currentTetris);
+    Tetris_type ty = (Tetris_type)(TETRIS_TYPE_1 + (qrand() % TETRIS_TYPE_END));
+    currentTetris = new tetris(ty,
+                               this,
+                               wTop,
+                               wLeft,
+                               wRight,
+                               wShadow);
+
+    scene.addItem(currentTetris);
+}
+
+

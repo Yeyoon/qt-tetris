@@ -1,4 +1,6 @@
 #include "tetris.h"
+#include "gamecontroller.h"
+#include "wall.h"
 #include <QPainter>
 #include <QDebug>
 
@@ -6,9 +8,18 @@ const int BOXSIZE = 10;
 const int TETRIS_W = 4;
 const int TETRIS_H_ = 4;
 
-tetris::tetris(const Tetris_type &t):location(QPointF(0,0)),myType(t)
+tetris::tetris(const Tetris_type &t, GameController *game,Wall *top, Wall *l, Wall *r, Wall *b):
+    location(QPointF(0,-100)),
+    myType(t),
+    isStop(false),
+    game(game),
+    wTop(top),
+    wLeft(l),
+    wRight(r),
+    wBottom(b),
+    direction(TETRIS_DOWN)
 {
-    Qt::GlobalColor colors[] = {Qt::red,Qt::yellow,Qt::blue,Qt::green,Qt::gray,Qt::cyan,Qt::magenta};
+    Qt::GlobalColor colors[] = {Qt::red,Qt::yellow,Qt::blue,Qt::green,Qt::darkYellow,Qt::cyan,Qt::magenta};
     myColor = colors[myType % TETRIS_TYPE_END];
 
     switch (myType) {
@@ -39,7 +50,7 @@ tetris::tetris(const Tetris_type &t):location(QPointF(0,0)),myType(t)
 
     speed = 5;
 
-    setPos(0,0);
+    setPos(0,-100);
 }
 
 QRectF tetris::boundingRect() const
@@ -50,8 +61,6 @@ QRectF tetris::boundingRect() const
 
     QRectF bound = QRectF(x,y,4*BOXSIZE,4*BOXSIZE);
 
-    qDebug() << "bound";
-    qDebug() << bound;
     return bound;
 }
 
@@ -104,28 +113,64 @@ void tetris::advance(int step)
     if (tickCnt++ % speed)
         return;
 
-  // moveDown();
+    if (!isStop) {
+        switch(direction) {
+        case TETRIS_LEFT:
+            moveLeft();
+            break;
+        case TETRIS_RIGHT:
+            moveRight();
+            break;
+        default:
+            moveDown();    
+        }
 
-  // qDebug() << "Move down";
-    setPos(location);
+        setPos(location);
+        if (isStop)
+            game->stopTetris(this);
+    }
+
+
+}
+
+void tetris::setStop(bool s)
+{
+    isStop = s;
 }
 
 void tetris::moveLeft()
 {
     location.rx() -= BOXSIZE;
+
+    if (wLeft->collidesWithItem(this)) {
+        location.rx() += BOXSIZE;
+    }
 }
 
 void tetris::moveDown()
 {
-    location.ry() += BOXSIZE;
+    if (wBottom->collidesWithItem(this)) {
+        isStop = true;
+        return;
+    }
 
-    qDebug() << "Key move down";
-    qDebug() << location;
+    location.ry() += BOXSIZE;
 }
 
 void tetris::moveRight()
 {
-
     location.rx() += BOXSIZE;
+    if (wRight->collidesWithItem(this)){
+        location.rx() -= BOXSIZE;
+    }
 }
 
+void tetris::moveUp()
+{
+    location.ry() -= BOXSIZE;
+}
+
+void tetris::setDirection(Tetris_Direction d)
+{
+    direction = d;
+}

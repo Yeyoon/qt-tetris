@@ -11,7 +11,6 @@ class QGraphicsScene;
 class QGraphicsView;
 class GameController;
 
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT

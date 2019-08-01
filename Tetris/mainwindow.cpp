@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "gamecontroller.h"
-
+#include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QTimer>
 #include <QMessageBox>
