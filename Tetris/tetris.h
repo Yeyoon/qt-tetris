@@ -26,11 +26,11 @@ typedef enum {
 }Tetris_Direction;
 
 typedef enum {
-    TETRIS_COLLIDING_LEFT,
-    TETRIS_COLLIDING_RIGHT,
-    TETRIS_COLLIDING_DOWN,
-    TETRIS_COLLIDING_TOP,
-    TETRIS_COLLIDING_NONE,
+    TETRIS_COLLIDING_LEFT = (1 << TETRIS_LEFT),
+    TETRIS_COLLIDING_RIGHT = (1 << TETRIS_RIGHT),
+    TETRIS_COLLIDING_DOWN = (1 << TETRIS_DOWN),
+    TETRIS_COLLIDING_TOP = (1 << TETRIS_UP),
+    TETRIS_COLLIDING_NONE = 0,
 }Tetris_Collid;
 
 typedef enum {
@@ -78,7 +78,7 @@ private:
     QList<QRectF> shapV;
 
     Tetris_State  tetrisState;
-    Tetris_Collid collidType;
+    int collidType;
     Tetris_Direction direction;
 };
 

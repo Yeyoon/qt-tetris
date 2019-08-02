@@ -14,7 +14,7 @@ tetris::tetris(const Tetris_type &t, GameController *game):
     isStop(TETRIS_UP),
     game(game),
     tetrisState(TETRIS_STATE_RUN),
-    collidType(TETRIS_COLLIDING_NONE),
+    collidType(0),
     direction(TETRIS_DOWN)
 {
     Qt::GlobalColor colors[] = {Qt::red,Qt::yellow,Qt::blue,Qt::green,Qt::darkYellow,Qt::cyan,Qt::magenta};
@@ -116,47 +116,29 @@ void tetris::updatePosition()
     qDebug() << "loc before move " << location;
     switch (direction) {
     case TETRIS_LEFT:
-        moveLeft();
+        if (!(collidType & TETRIS_COLLIDING_LEFT)){
+            moveLeft();
+            collidType = (Tetris_Collid)(collidType & (~TETRIS_COLLIDING_RIGHT));
+        }
         break;
     case TETRIS_RIGHT:
-        moveRight();
+        if (!(collidType & TETRIS_COLLIDING_RIGHT)){
+            moveRight();
+            collidType = (Tetris_Collid)(collidType & (~TETRIS_COLLIDING_LEFT));
+        }
         break;
     case TETRIS_DOWN:
-        moveDown();
+        if (!(collidType & TETRIS_COLLIDING_DOWN))
+            moveDown();
         break;
+    case TETRIS_NONE:
+        return;
     default:
         break;
     }
     setPos(location);
 
-    if (tetrisState == TETRIS_STATE_RUN_ONECE) {
-        game->stopTetris(this);
-        tetrisState = TETRIS_STATE_PAUSE;
-        return;
-    }
-    qDebug() << "pos is after move  : " << pos();
-    qDebug() << "loc is after move " << location;
-    Tetris_Collid willCollid = game->handleColliding(this);
-
-    qDebug() << "updatePosition() collid : " << willCollid;
-    switch (willCollid) {
-    case TETRIS_COLLIDING_TOP:
-        tetrisState = TETRIS_STATE_PAUSE;
-        game->gameOver();
-        break;
-    case TETRIS_COLLIDING_LEFT:
-    case TETRIS_COLLIDING_RIGHT:
-        collidType = willCollid;
-        break;
-    case TETRIS_COLLIDING_DOWN:
-        collidType = willCollid;
-        //tetrisState = TETRIS_STATE_RUN_ONECE;
-        tetrisState = TETRIS_STATE_PAUSE;
-        game->stopTetris(this);
-        break;
-    default:
-        break; // do nothing just update pos
-    }
+    collidType = game->handleColliding(this);
 }
 
 void tetris::advance(int step)

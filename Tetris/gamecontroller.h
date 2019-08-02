@@ -25,7 +25,7 @@ public:
     void stopTetris(tetris *te);
     void newTetris();
 
-    Tetris_Collid handleColliding(tetris *te);
+    int handleColliding(tetris *te);
     bool handleColliding();
 
 public slots:

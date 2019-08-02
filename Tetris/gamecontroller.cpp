@@ -128,9 +128,9 @@ void GameController::newTetris()
     scene.addItem(currentTetris);
 }
 
-Tetris_Collid GameController::handleColliding(tetris *te)
+int GameController::handleColliding(tetris *te)
 {
-    Tetris_Collid collid = TETRIS_COLLIDING_NONE;
+    int collid = 0;
     if (wTop->collidesWithItem(te)){
         return TETRIS_COLLIDING_TOP;
     }
@@ -139,11 +139,15 @@ Tetris_Collid GameController::handleColliding(tetris *te)
     b.moveTo(b.x(),b.y()-1);
     qDebug() << "b is : " << b;
     if (te->collidingWithQRectF(b)) {
-        collid = TETRIS_COLLIDING_DOWN;
-    }else if (wLeft->collidesWithItem(te)){
-        collid = TETRIS_COLLIDING_LEFT;
-    }else if (wRight->collidesWithItem(te)){
-        collid = TETRIS_COLLIDING_RIGHT;
+        collid |= TETRIS_COLLIDING_DOWN;
+    }
+
+    if (wLeft->collidesWithItem(te)){
+        collid |= TETRIS_COLLIDING_LEFT;
+    }
+
+    if (wRight->collidesWithItem(te)){
+        collid |= TETRIS_COLLIDING_RIGHT;
     }
 
     for (int i = 0;collid != TETRIS_COLLIDING_DOWN &&  i < tetrisList.size(); i++) {
@@ -156,10 +160,10 @@ Tetris_Collid GameController::handleColliding(tetris *te)
             qDebug() << tetrisList.size();
             qDebug() << "te : " << te->pos();
             qDebug() << "tetriList[i] : " << tetrisList[i]->pos();
-            collid =  TETRIS_COLLIDING_DOWN;
+            collid |=  TETRIS_COLLIDING_DOWN;
             break;
         }else {
-            collid = TETRIS_LEFT == d ? TETRIS_COLLIDING_LEFT : TETRIS_COLLIDING_RIGHT;
+            collid |= TETRIS_LEFT == d ? TETRIS_COLLIDING_LEFT : TETRIS_COLLIDING_RIGHT;
         }
     }
 
