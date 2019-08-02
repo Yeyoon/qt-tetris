@@ -3,12 +3,14 @@
 
 #include <QObject>
 #include <QTimer>
+#include "tetris.h"
 
 class QGraphicsScene;
 class QKeyEvent;
 
 class tetris;
 class Wall;
+
 
 class GameController : public QObject
 {
@@ -23,7 +25,8 @@ public:
     void stopTetris(tetris *te);
     void newTetris();
 
-    bool handleColliding(tetris *te);
+    Tetris_Collid handleColliding(tetris *te);
+    bool handleColliding();
 
 public slots:
     void pause();

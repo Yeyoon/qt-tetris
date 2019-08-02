@@ -8,15 +8,13 @@ const int BOXSIZE = 10;
 const int TETRIS_W = 4;
 const int TETRIS_H_ = 4;
 
-tetris::tetris(const Tetris_type &t, GameController *game,Wall *top, Wall *l, Wall *r, Wall *b):
+tetris::tetris(const Tetris_type &t, GameController *game):
     location(QPointF(0,-90)),
     myType(t),
-    isStop(false),
+    isStop(TETRIS_UP),
     game(game),
-    wTop(top),
-    wLeft(l),
-    wRight(r),
-    wBottom(b),
+    tetrisState(TETRIS_STATE_RUN),
+    collidType(TETRIS_COLLIDING_NONE),
     direction(TETRIS_DOWN)
 {
     Qt::GlobalColor colors[] = {Qt::red,Qt::yellow,Qt::blue,Qt::green,Qt::darkYellow,Qt::cyan,Qt::magenta};
@@ -51,6 +49,18 @@ tetris::tetris(const Tetris_type &t, GameController *game,Wall *top, Wall *l, Wa
     speed = 5;
 
     setPos(0,-100);
+
+    for (int i = 0; i < 0xf; i++){
+        if (locationBits & (1 << i)) {
+           int yl = i / TETRIS_W;
+           int xl = i % TETRIS_W;
+
+           qreal xt =  xl * BOXSIZE;
+           qreal yt =  yl * BOXSIZE;
+
+           shapV.push_back(QRectF(xt,yt,BOXSIZE,BOXSIZE));
+        }
+    }
 }
 
 QRectF tetris::boundingRect() const
@@ -58,10 +68,7 @@ QRectF tetris::boundingRect() const
     QPointF temp = mapFromScene(location);
     qreal x = temp.x();
     qreal y = temp.y();
-
-    QRectF bound = QRectF(x,y,4*BOXSIZE,4*BOXSIZE);
-
-    return bound;
+    return QRectF(x,y,4*BOXSIZE,4*BOXSIZE);
 }
 
 void tetris::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -75,7 +82,7 @@ void tetris::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QW
     painter->setPen(pen);
     painter->setBrush(myColor);
 
-    //painter->fillPath(shape(),myColor);
+   // painter->fillPath(shape(),myColor);
     painter->drawPath(shape());
     painter->restore();
 }
@@ -89,93 +96,105 @@ QPainterPath tetris::shape() const
     qreal x = temp.x();
     qreal y = temp.y();
 
-    for (int i = 0; i < 0xf; i++){
-        if (locationBits & (1 << i)) {
-           int yl = i / TETRIS_W;
-           int xl = i % TETRIS_W;
-
-           qreal xt = x + xl * BOXSIZE;
-           qreal yt = y + yl * BOXSIZE;
-
-           path.addRect(QRectF(xt,yt,BOXSIZE,BOXSIZE));
-        }
+    for (int i = 0; i < shapV.size(); i++){
+        QRectF r = QRectF(shapV[i]);
+        r.setX(r.x() + x);
+        r.setY(r.y() + y);
+        r.setHeight(shapV[i].height());
+        r.setWidth(shapV[i].width());
+        path.addRect(r);
     }
 
     return path;
 }
 
-void tetris::advance(int step)
+void tetris::updatePosition()
 {
-    if (!step) {
-        if (game->handleColliding(this))
-            isStop = true;
+    QPointF old_location = pos();
+    qDebug() << "updatePosition : direction " << direction;
+    qDebug() << "pos is : " << old_location;
+    qDebug() << "loc before move " << location;
+    switch (direction) {
+    case TETRIS_LEFT:
+        moveLeft();
+        break;
+    case TETRIS_RIGHT:
+        moveRight();
+        break;
+    case TETRIS_DOWN:
+        moveDown();
+        break;
+    default:
+        break;
+    }
+    setPos(location);
+
+    if (tetrisState == TETRIS_STATE_RUN_ONECE) {
+        game->stopTetris(this);
+        tetrisState = TETRIS_STATE_PAUSE;
         return;
     }
+    qDebug() << "pos is after move  : " << pos();
+    qDebug() << "loc is after move " << location;
+    Tetris_Collid willCollid = game->handleColliding(this);
 
+    qDebug() << "updatePosition() collid : " << willCollid;
+    switch (willCollid) {
+    case TETRIS_COLLIDING_TOP:
+        tetrisState = TETRIS_STATE_PAUSE;
+        game->gameOver();
+        break;
+    case TETRIS_COLLIDING_LEFT:
+    case TETRIS_COLLIDING_RIGHT:
+        collidType = willCollid;
+        break;
+    case TETRIS_COLLIDING_DOWN:
+        collidType = willCollid;
+        //tetrisState = TETRIS_STATE_RUN_ONECE;
+        tetrisState = TETRIS_STATE_PAUSE;
+        game->stopTetris(this);
+        break;
+    default:
+        break; // do nothing just update pos
+    }
+}
+
+void tetris::advance(int step)
+{
+    if (!step) return;
     if (tickCnt++ % speed)
         return;
 
-    if (!isStop) {
-        switch(direction) {
-        case TETRIS_LEFT:
-            moveLeft();
-            break;
-        case TETRIS_RIGHT:
-            moveRight();
-            break;
-        default:
-            //moveDown();
-            break;
-        }
+    if (tetrisState == TETRIS_STATE_PAUSE)
+        return;
 
-
-        qDebug() << location;
-        if (game->handleColliding(this))
-            isStop = true;
-
-        if (isStop)
-            game->stopTetris(this);
-
-
-    }
-
-    setPos(location);
+    updatePosition();
 }
 
-void tetris::setStop(bool s)
+void tetris::setStop(Tetris_Direction s)
 {
     isStop = s;
 }
 
 void tetris::moveLeft()
 {
-    location.rx() -= BOXSIZE;
-
-    if (wLeft->collidesWithItem(this)) {
-        location.rx() += BOXSIZE;
+    direction = TETRIS_DOWN;
+    if (isStop == TETRIS_LEFT) {
+        return;
     }
 
-    direction = TETRIS_DOWN;
+    location.rx() -= BOXSIZE;
 }
 
 void tetris::moveDown()
 {
-    if (wBottom->collidesWithItem(this)) {
-        isStop = true;
-        return;
-    }
-
     location.ry() += BOXSIZE;
 }
 
 void tetris::moveRight()
 {
-    location.rx() += BOXSIZE;
-    if (wRight->collidesWithItem(this)){
-        location.rx() -= BOXSIZE;
-    }
-
     direction = TETRIS_DOWN;
+    location.rx() += BOXSIZE;
 }
 
 void tetris::moveUp()
@@ -194,37 +213,66 @@ QList<QRectF> tetris::collectingRects()
     qreal x = location.x();
     qreal y = location.y();
 
-    for (int i = 0; i < 0xf; i++){
-        if (locationBits & (1 << i)) {
-            int yl = i / TETRIS_W;
-            int xl = i % TETRIS_W;
-
-            qreal xt = x + xl * BOXSIZE;
-            qreal yt = y + yl * BOXSIZE;
-
-            q.push_back(QRectF(xt,yt,BOXSIZE,BOXSIZE));
-        }
+    for (int i = 0; i < shapV.size(); i++) {
+        QRectF r = QRectF(shapV[i]);
+        r.setX(x+r.x());
+        r.setY(y+r.y());
+        r.setHeight(shapV[i].height());
+        r.setWidth(shapV[i].width());
+        qDebug() << "shapV[i] : " << shapV[i];
+        qDebug() << "r : " << r;
+        q.push_back(r);
     }
 
     return q;
 }
 
-bool tetris::collidingWithTetris(tetris *other)
+Tetris_Direction tetris::willCollidingWithTetris(tetris *other)
 {
     QList<QRectF> q = collectingRects();
     QList<QRectF> p = other->collectingRects();
 
+    //qDebug() << "q : " << q;
+   // qDebug() << "p : " << p;
     for (int i = 0; i < q.size(); i++) {
-        QRectF xp = q[i];
+        QRectF xp = QRectF(q[i]);
+        QRectF lp = QRectF(q[i]);
+        QRectF rp = QRectF(q[i]);
         xp.setHeight(xp.height() + 1);
+        lp.moveTo(xp.x()-1,xp.y());
+        rp.setWidth(rp.width() + 1);
 
         for (int j = 0; j < p.size(); j++) {
             QRectF yp = p[j];
             yp.setHeight(yp.height()+1);
 
             if (xp.intersects(yp))
-                return true;
+                return TETRIS_DOWN;
+
+            yp = p[j];
+
+            if (lp.intersects(yp))
+                return TETRIS_LEFT;
+
+            if (rp.intersects(yp))
+                return TETRIS_RIGHT;
         }
+    }
+
+    return TETRIS_NONE;
+}
+
+bool tetris::isStopped()
+{
+    return tetrisState == TETRIS_STATE_PAUSE;
+}
+
+bool tetris::collidingWithQRectF(const QRectF &r)
+{
+    QList<QRectF> head = this->collectingRects();
+    for (int i = 0; i < head.size(); i++){
+        if (r.intersects(head[i]))
+            return true;
     }
 
     return false;

@@ -30,11 +30,7 @@ GameController::GameController(QGraphicsScene &scene, QObject *parent) :
 
     Tetris_type ty = (Tetris_type)(TETRIS_TYPE_1 + (qrand() % TETRIS_TYPE_END));
     currentTetris = new tetris(ty,
-                               this,
-                               wTop,
-                               wLeft,
-                               wRight,
-                               wShadow);
+                               this);
     scene.addItem(currentTetris);
 
     scene.installEventFilter(this);
@@ -68,7 +64,9 @@ void GameController::handleKeyPressed(QKeyEvent *event)
                 break;
             case Qt::Key_Down:
                 currentTetris->setDirection(TETRIS_DOWN);
-                currentTetris->moveDown();
+                break;
+            case Qt::Key_Up:
+                stopTetris(currentTetris);
                 break;
             case Qt::Key_Space:
                 pause();
@@ -114,40 +112,54 @@ bool GameController::eventFilter(QObject *object, QEvent *event)
 void GameController::stopTetris(tetris* te)
 {
     qDebug() << "stop tetris";
-
+    //te->setStop(TETRIS_DOWN);
     newTetris();
 }
 
 void GameController::newTetris()
 {
+    qDebug() << "newTetris";
+
     tetrisList.push_back(currentTetris);
     Tetris_type ty = (Tetris_type)(TETRIS_TYPE_1 + (qrand() % TETRIS_TYPE_END));
     currentTetris = new tetris(ty,
-                               this,
-                               wTop,
-                               wLeft,
-                               wRight,
-                               wShadow);
+                               this);
 
     scene.addItem(currentTetris);
 }
 
-bool GameController::handleColliding(tetris *te)
+Tetris_Collid GameController::handleColliding(tetris *te)
 {
-    bool ret = false;
+    Tetris_Collid collid = TETRIS_COLLIDING_NONE;
     if (wTop->collidesWithItem(te)){
-        gameOver();
-        return true;
+        return TETRIS_COLLIDING_TOP;
     }
 
-    if (wBottom->collidesWithItem(te)) {
-        ret = true;
+    QRectF b = QRectF(wBottom->boundingRect());
+    b.moveTo(b.x(),b.y()-1);
+    qDebug() << "b is : " << b;
+    if (te->collidingWithQRectF(b)) {
+        collid = TETRIS_COLLIDING_DOWN;
+    }else if (wLeft->collidesWithItem(te)){
+        collid = TETRIS_COLLIDING_LEFT;
+    }else if (wRight->collidesWithItem(te)){
+        collid = TETRIS_COLLIDING_RIGHT;
     }
 
-    for (int i = 0;!ret &&  i < tetrisList.size(); i++) {
-        if (te->collidingWithTetris(tetrisList[i])) {
-            ret =  true;
+    for (int i = 0;collid != TETRIS_COLLIDING_DOWN &&  i < tetrisList.size(); i++) {
+        Tetris_Direction d = te->willCollidingWithTetris(tetrisList[i]);
+       // bool iscoll = te->collidesWithItem(tetrisList[i]);
+        if (d == TETRIS_NONE)
+            continue;
+
+        if (d == TETRIS_DOWN) {
+            qDebug() << tetrisList.size();
+            qDebug() << "te : " << te->pos();
+            qDebug() << "tetriList[i] : " << tetrisList[i]->pos();
+            collid =  TETRIS_COLLIDING_DOWN;
             break;
+        }else {
+            collid = TETRIS_LEFT == d ? TETRIS_COLLIDING_LEFT : TETRIS_COLLIDING_RIGHT;
         }
     }
 
@@ -178,7 +190,33 @@ bool GameController::handleColliding(tetris *te)
             tetrisList[i]->moveDown();
         }
     }
-    return ret;
+    return collid;
+}
+
+bool GameController::handleColliding()
+{
+    if (wTop->collidesWithItem(currentTetris)) {
+        gameOver();
+        return true;
+    }
+
+    if (wBottom->collidesWithItem(currentTetris)) {
+        currentTetris->setStop(TETRIS_DOWN);
+        return true;
+    }
+
+    for (int i = 0; i < tetrisList.size(); i++){
+        if (currentTetris->collidesWithItem(tetrisList[i])) {
+            qDebug() << currentTetris->pos();
+            qDebug() << tetrisList[i]->pos();
+            qDebug() << currentTetris->collidesWithPath(tetrisList[i]->shape());
+            qDebug() << currentTetris->mapFromScene(currentTetris->shape());
+            qDebug() << tetrisList[i]->mapFromScene(tetrisList[i]->shape());
+            return true;
+        }
+    }
+
+    return false;
 }
 
 

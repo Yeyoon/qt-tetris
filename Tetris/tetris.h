@@ -4,7 +4,6 @@
 #include <QGraphicsItem>
 
 class GameController;
-class Wall;
 
 typedef enum
 {
@@ -23,12 +22,28 @@ typedef enum {
     TETRIS_RIGHT,
     TETRIS_DOWN,
     TETRIS_UP,
+    TETRIS_NONE,
 }Tetris_Direction;
+
+typedef enum {
+    TETRIS_COLLIDING_LEFT,
+    TETRIS_COLLIDING_RIGHT,
+    TETRIS_COLLIDING_DOWN,
+    TETRIS_COLLIDING_TOP,
+    TETRIS_COLLIDING_NONE,
+}Tetris_Collid;
+
+typedef enum {
+    TETRIS_STATE_RUN,
+    TETRIS_STATE_PAUSE,
+    TETRIS_STATE_RUN_ONECE,
+    TETRIS_STATE_NONE,
+}Tetris_State;
 
 class tetris : public QGraphicsItem
 {
 public:
-    tetris(const Tetris_type &t, GameController *game, Wall *top, Wall *l, Wall *r, Wall *b);
+    tetris(const Tetris_type &t, GameController *game);
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
                QWidget *widget);
@@ -40,12 +55,17 @@ public:
     void moveDown();
     void moveUp();
 
-    void setStop(bool s);
+    void setStop(Tetris_Direction s);
     void setDirection(Tetris_Direction d);
 
-    bool collidingWithTetris(tetris *other);
+    Tetris_Direction willCollidingWithTetris(tetris *other);
     QList<QRectF> collectingRects();
+    bool collidingWithQRectF(const QRectF &r);
+
+    bool isStopped();
 private:
+    void updatePosition();
+
     QPointF location;
     Tetris_type myType;
     Qt::GlobalColor myColor;
@@ -55,11 +75,10 @@ private:
     bool isStop;
     GameController *game;
 
-    Wall *wTop;
-    Wall *wLeft;
-    Wall *wRight;
-    Wall *wBottom;
+    QList<QRectF> shapV;
 
+    Tetris_State  tetrisState;
+    Tetris_Collid collidType;
     Tetris_Direction direction;
 };
 
