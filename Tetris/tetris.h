@@ -22,6 +22,7 @@ typedef enum {
     TETRIS_RIGHT,
     TETRIS_DOWN,
     TETRIS_UP,
+    TETRIS_CHANGE,
     TETRIS_NONE,
 }Tetris_Direction;
 

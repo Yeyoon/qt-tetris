@@ -168,6 +168,10 @@ void tetris::updatePosition1()
     case TETRIS_DOWN:
         moveDown();
         break;
+    case TETRIS_CHANGE:
+        change();
+        direction = TETRIS_DOWN;
+        return;
     case TETRIS_NONE:
         return;
     default:

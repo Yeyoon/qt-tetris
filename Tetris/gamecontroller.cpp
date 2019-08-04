@@ -59,16 +59,10 @@ void GameController::handleKeyPressed(QKeyEvent *event)
                 currentTetris->setDirection(TETRIS_DOWN);
                 break;
             case Qt::Key_Up:
-                currentTetris->change();
+                currentTetris->setDirection(TETRIS_CHANGE);
                 break;
             case Qt::Key_Space:
                 pause();
-                break;
-            case Qt::Key_Enter:
-                qDebug() << "Enter";
-                pause();
-                currentTetris->change();
-               // resume();
                 break;
         }
     else resume();
