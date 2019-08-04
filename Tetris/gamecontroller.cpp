@@ -11,6 +11,7 @@
 GameController::GameController(QGraphicsScene &scene, QObject *parent) :
     QObject(parent),
     scene(scene),
+    currentTetris(nullptr),
     isPause(false)
 {
     timer.start( 1000/33 );
@@ -20,7 +21,7 @@ GameController::GameController(QGraphicsScene &scene, QObject *parent) :
     wRight = new Wall(90,-100,10,200);
     wBottom = new Wall(-100,90,200,10);
 
-    wShadow = new Wall(-90,80,180,10,Qt::gray);
+    wShadow = new Wall(-90,80,180,10,Qt::lightGray);
 
     scene.addItem(wTop);
     scene.addItem(wLeft);
@@ -28,10 +29,7 @@ GameController::GameController(QGraphicsScene &scene, QObject *parent) :
     scene.addItem(wBottom);
     scene.addItem(wShadow);
 
-    Tetris_type ty = (Tetris_type)(TETRIS_TYPE_1 + (qrand() % TETRIS_TYPE_END));
-    currentTetris = new tetris(ty,
-                               this);
-    scene.addItem(currentTetris);
+    stopTetris(nullptr);
 
     scene.installEventFilter(this);
 
@@ -41,11 +39,6 @@ GameController::GameController(QGraphicsScene &scene, QObject *parent) :
 GameController::~GameController()
 {
 }
-
-
-//void GameController::snakeHitWall(Snake *snake, Wall *wall)
-//{
-//}
 
 void GameController::snakeAteItself()
 {
@@ -66,10 +59,16 @@ void GameController::handleKeyPressed(QKeyEvent *event)
                 currentTetris->setDirection(TETRIS_DOWN);
                 break;
             case Qt::Key_Up:
-                stopTetris(currentTetris);
+                currentTetris->change();
                 break;
             case Qt::Key_Space:
                 pause();
+                break;
+            case Qt::Key_Enter:
+                qDebug() << "Enter";
+                pause();
+                currentTetris->change();
+               // resume();
                 break;
         }
     else resume();
@@ -90,6 +89,7 @@ void GameController::pause()
     disconnect(&timer, SIGNAL(timeout()),
                &scene, SLOT(advance()));
     isPause = true;
+    qDebug() << "pause";
 }
 
 void GameController::resume()
@@ -111,116 +111,155 @@ bool GameController::eventFilter(QObject *object, QEvent *event)
 
 void GameController::stopTetris(tetris* te)
 {
+    (void)te;
     qDebug() << "stop tetris";
     //te->setStop(TETRIS_DOWN);
+    pause();
     newTetris();
+    if (!currentTetris)
+        return;
+
+    if (handleColliding(currentTetris)){
+        gameOver();
+    }else {
+        currentTetris->setDirection(TETRIS_DOWN);
+        resume();
+    }
 }
 
 void GameController::newTetris()
 {
     qDebug() << "newTetris";
 
-    tetrisList.push_back(currentTetris);
+    if (currentTetris != nullptr)
+        tetrisList.push_back(currentTetris);
     Tetris_type ty = (Tetris_type)(TETRIS_TYPE_1 + (qrand() % TETRIS_TYPE_END));
+
     currentTetris = new tetris(ty,
                                this);
-
+    currentTetris->setDirection(TETRIS_NONE);
     scene.addItem(currentTetris);
 }
 
-int GameController::handleColliding(tetris *te)
+bool GameController::handleColliding(tetris *cu)
 {
-    int collid = 0;
-    if (wTop->collidesWithItem(te)){
-        return TETRIS_COLLIDING_TOP;
-    }
-
-    QRectF b = QRectF(wBottom->boundingRect());
-    b.moveTo(b.x(),b.y()-1);
-    qDebug() << "b is : " << b;
-    if (te->collidingWithQRectF(b)) {
-        collid |= TETRIS_COLLIDING_DOWN;
-    }
-
-    if (wLeft->collidesWithItem(te)){
-        collid |= TETRIS_COLLIDING_LEFT;
-    }
-
-    if (wRight->collidesWithItem(te)){
-        collid |= TETRIS_COLLIDING_RIGHT;
-    }
-
-    for (int i = 0;collid != TETRIS_COLLIDING_DOWN &&  i < tetrisList.size(); i++) {
-        Tetris_Direction d = te->willCollidingWithTetris(tetrisList[i]);
-       // bool iscoll = te->collidesWithItem(tetrisList[i]);
-        if (d == TETRIS_NONE)
-            continue;
-
-        if (d == TETRIS_DOWN) {
-            qDebug() << tetrisList.size();
-            qDebug() << "te : " << te->pos();
-            qDebug() << "tetriList[i] : " << tetrisList[i]->pos();
-            collid |=  TETRIS_COLLIDING_DOWN;
-            break;
-        }else {
-            collid |= TETRIS_LEFT == d ? TETRIS_COLLIDING_LEFT : TETRIS_COLLIDING_RIGHT;
-        }
-    }
-
-    // check all values are online
-    qreal x = -90;
-    qreal y = 80;
-    qreal w = 180;
-    qreal h = 10;
-    qreal stepw = 10;
-    qreal i;
-
-    tetrisList.push_back(te);
-    for ( i = x; i < x + w; i += stepw){
-        QPointF p(x+stepw/2,y+h/2);
-        for (int i = 0; i < tetrisList.size(); i++){
-            if (!tetrisList[i]->contains(p))
-                break;
-        }
-
-        if (i < tetrisList.size()) break;
-    }
-
-    tetrisList.pop_back();
-    if (i >= x + w) {
-        qDebug() << "line complete";
-
-        for (int i = 0; i < tetrisList.size(); i++) {
-            tetrisList[i]->moveDown();
-        }
-    }
-    return collid;
-}
-
-bool GameController::handleColliding()
-{
-    if (wTop->collidesWithItem(currentTetris)) {
+    if (wTop->collidesWithItem(cu)) {
         gameOver();
         return true;
     }
 
-    if (wBottom->collidesWithItem(currentTetris)) {
-        currentTetris->setStop(TETRIS_DOWN);
+    if (wBottom->collidesWithItem(cu)) {
+        cu->setCollidType(TETRIS_COLLIDING_BOTTOM);
         return true;
     }
 
     for (int i = 0; i < tetrisList.size(); i++){
-        if (currentTetris->collidesWithItem(tetrisList[i])) {
-            qDebug() << currentTetris->pos();
-            qDebug() << tetrisList[i]->pos();
-            qDebug() << currentTetris->collidesWithPath(tetrisList[i]->shape());
-            qDebug() << currentTetris->mapFromScene(currentTetris->shape());
-            qDebug() << tetrisList[i]->mapFromScene(tetrisList[i]->shape());
+        if (cu == tetrisList[i])
+            continue;
+
+        if (cu->collidesWithItem(tetrisList[i])) {
+            QPainterPath p1, p2;
+            p1 = cu->mapToScene(cu->shape());
+            p2 = tetrisList[i]->mapToScene(tetrisList[i]->shape());
+            QPainterPath pin = p1.intersected(p2);
+
+            if (pin.elementCount() == 0)
+                continue;
+            qDebug() << "p1 is : " << p1;
+            qDebug() << "p2 is : " << p2;
+            qDebug() << "pin is : " << pin;
             return true;
         }
+    }
+
+    if (wLeft->collidesWithItem(cu) || wRight->collidesWithItem(cu)){
+        return true;
     }
 
     return false;
 }
 
+bool GameController::checkLineCompleted(qreal y, int unit_w,tetris *te, QMap<tetris*,QList<QRectF>> &m)
+{
+    qreal x = -90;
+    int i;
+    QRectF r;
 
+    m.clear();
+    for (; x < 90; x+= unit_w){
+        r = QRectF(x,y,unit_w,unit_w);
+        QPainterPath path;
+        path.addRect(r);
+        qDebug() << "befor map : " << path;
+        path = wBottom->mapToScene(path);
+        qDebug() << "after map : " << path;
+        if (wBottom->collidesWithPath(path))
+            return false;
+
+        for (i = 0; i < tetrisList.size(); i++) {
+            if (tetrisList[i]->collidingWithQRectF(r)){
+                m[tetrisList[i]].push_back(r);
+                break;
+            }
+        }
+
+        if (i == tetrisList.size()) {
+            if (te->collidingWithQRectF(r)){
+                m[te].push_back(r);
+                continue;
+            }
+
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool GameController::isLineComplete(tetris* te, int unit_w)
+{
+    QRectF b = te->mapRectToScene(te->boundingRect());
+    qreal y = b.y();
+    qreal x = -90;
+    QRectF r;
+    QMap<tetris*,QList<QRectF> > m;
+    qreal yx;
+
+    for (yx = y; yx < y + b.height(); yx += unit_w) {
+        if (checkLineCompleted(yx,unit_w,te,m))
+            break;
+    }
+
+    if (yx == y + b.height())
+        return false;
+
+    qDebug() << "line completed for point : " << b;
+    qDebug() << "line completed for line :" << yx;
+
+    QMapIterator<tetris*,QList<QRectF>> qiter(m);
+    while (qiter.hasNext()) {
+        tetris* key = qiter.next().key();
+        QList<QRectF> ra = qiter.value();
+        for (int i = 0; i < ra.size(); i++) {
+            key->clearRectF(ra[i]);
+        }
+    }
+
+    // do clear
+    for (int i =  tetrisList.size()-1; i >=0;  --i) {
+        if (tetrisList[i]->isEmpty()) {
+            scene.removeItem(tetrisList[i]);
+
+            qDebug() << "remove item : " << tetrisList[i]->pos();
+            tetris *xx = tetrisList[i];
+            tetrisList.removeAt(i);
+            delete xx;
+            continue;
+        }
+    }
+
+    for (int i = 0; i < tetrisList.size(); ++i) {
+        tetrisList[i]->manualMoveWithHandleCollid(TETRIS_DOWN);
+    }
+    return true;
+}

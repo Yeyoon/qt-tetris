@@ -98,8 +98,8 @@ void MainWindow::initSceneBackground()
 {
     QPixmap bg(TILE_SIZE, TILE_SIZE);
     QPainter p(&bg);
-    p.setBrush(QBrush(Qt::gray));
-    p.drawRect(0, 0, TILE_SIZE*2, TILE_SIZE*2);
+    p.setBrush(QBrush(Qt::lightGray));
+    p.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
 
     view->setBackgroundBrush(QBrush(bg));
 }

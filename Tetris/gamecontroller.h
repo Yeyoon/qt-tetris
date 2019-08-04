@@ -25,8 +25,8 @@ public:
     void stopTetris(tetris *te);
     void newTetris();
 
-    int handleColliding(tetris *te);
-    bool handleColliding();
+    bool handleColliding(tetris *te);
+    bool isLineComplete(tetris *te, int unit_w);
 
 public slots:
     void pause();
@@ -39,6 +39,8 @@ protected:
 private:
     void handleKeyPressed(QKeyEvent *event);
     void addNewFood();
+
+    bool checkLineCompleted(qreal y,int unit_w,tetris *te, QMap<tetris*,QList<QRectF>> &m);
 
     QTimer timer;
     QGraphicsScene &scene;

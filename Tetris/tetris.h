@@ -30,6 +30,7 @@ typedef enum {
     TETRIS_COLLIDING_RIGHT = (1 << TETRIS_RIGHT),
     TETRIS_COLLIDING_DOWN = (1 << TETRIS_DOWN),
     TETRIS_COLLIDING_TOP = (1 << TETRIS_UP),
+    TETRIS_COLLIDING_BOTTOM = (1 << (TETRIS_UP + 1)),
     TETRIS_COLLIDING_NONE = 0,
 }Tetris_Collid;
 
@@ -43,7 +44,7 @@ typedef enum {
 class tetris : public QGraphicsItem
 {
 public:
-    tetris(const Tetris_type &t, GameController *game);
+    tetris(const Tetris_type &t, GameController *game, int unit_w = 10);
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
                QWidget *widget);
@@ -63,8 +64,19 @@ public:
     bool collidingWithQRectF(const QRectF &r);
 
     bool isStopped();
+    void setCollidType(Tetris_Collid type);
+    bool handleColliding();
+    void shrink(int size);
+    void clearRectF(QRectF &r);
+    void setTetrisState(Tetris_State s);
+    bool isEmpty();
+    void change();
+
+    void manualMoveWithHandleCollid(Tetris_Direction d);
 private:
     void updatePosition();
+    void updatePosition1();
+    void updatePositionBits(unsigned int new_pbits);
 
     QPointF location;
     Tetris_type myType;
@@ -80,6 +92,9 @@ private:
     Tetris_State  tetrisState;
     int collidType;
     Tetris_Direction direction;
+
+    int unit_w;
+    int shrink_size;
 };
 
 #endif // TETRIS_H
