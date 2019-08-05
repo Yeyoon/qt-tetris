@@ -223,9 +223,11 @@ QList<QRectF> tetris::collectingRects()
 bool tetris::collidingWithQRectF(const QRectF &r)
 {
     QList<QRectF> head = this->collectingRects();
+    qDebug() << "r is : " << r;
     for (int i = 0; i < head.size(); i++){
         if (r.intersects(head[i]))
             return true;
+        qDebug() << " i : " << i << "\t" << head[i];
     }
 
     return false;

@@ -189,7 +189,7 @@ bool GameController::checkLineCompleted(qreal y, int unit_w,tetris *te, QMap<tet
     qDebug() << "checkLineCompleted start for y : " << y;
     m.clear();
 
-    if (y >= 100) {
+    if (y > 110) {
         // here is the bottom;
         return false;
     }
@@ -203,6 +203,9 @@ bool GameController::checkLineCompleted(qreal y, int unit_w,tetris *te, QMap<tet
         }
 
         if (i == tetrisList.size()) {
+            qDebug() << "te : " << te;
+            qDebug() << "r : " << r;
+
             if (te->collidingWithQRectF(r)){
                 m[te].push_back(r);
                 continue;
