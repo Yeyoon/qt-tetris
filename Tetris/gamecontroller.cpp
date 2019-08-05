@@ -183,6 +183,7 @@ bool GameController::handleColliding(tetris *cu)
 bool GameController::checkLineCompleted(qreal y, int unit_w,tetris *te, QMap<tetris*,QList<QRectF>> &m)
 {
     qreal x = -90;
+    qreal xend = x + unit_w * 10;
     int i;
     QRectF r;
 
@@ -193,7 +194,7 @@ bool GameController::checkLineCompleted(qreal y, int unit_w,tetris *te, QMap<tet
         // here is the bottom;
         return false;
     }
-    for (; x < 90; x+= unit_w){
+    for (; x < xend; x+= unit_w){
         r = QRectF(x,y,unit_w,unit_w);
         for (i = 0; i < tetrisList.size(); i++) {
             if (tetrisList[i]->collidingWithQRectF(r)){
@@ -257,6 +258,7 @@ bool GameController::isLineComplete(tetris* te, int unit_w)
             qDebug() << "remove item : " << tetrisList[i]->pos();
             qDebug() << "remove item is : " << tetrisList[i] << "\t" << " scene is : " << tetrisList[i]->scene();
             tetris *xx = tetrisList[i];
+            xx->hide();
             tetrisList.removeAt(i);
 
             removeList.push_back(xx);

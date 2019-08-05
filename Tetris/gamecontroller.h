@@ -36,12 +36,15 @@ public slots:
 protected:
      bool eventFilter(QObject *object, QEvent *event);
 
+ private slots:
+         void removeTetris(QList<tetris*> &removeList);
+
 private:
     void handleKeyPressed(QKeyEvent *event);
     void addNewFood();
 
     bool checkLineCompleted(qreal y,int unit_w,tetris *te, QMap<tetris*,QList<QRectF>> &m);
-    void removeTetris(QList<tetris*> &removeList);
+
 
     QTimer timer;
     QGraphicsScene &scene;
