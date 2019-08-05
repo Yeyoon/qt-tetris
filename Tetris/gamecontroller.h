@@ -28,6 +28,8 @@ public:
     bool handleColliding(tetris *te);
     bool isLineComplete(tetris *te, int unit_w);
 
+    void destroyTetris(tetris *destroy);
+
 public slots:
     void pause();
     void resume();
@@ -41,6 +43,7 @@ private:
     void addNewFood();
 
     bool checkLineCompleted(qreal y,int unit_w,tetris *te, QMap<tetris*,QList<QRectF>> &m);
+    void removeTetris(QList<tetris*> &removeList);
 
     QTimer timer;
     QGraphicsScene &scene;
@@ -56,6 +59,7 @@ private:
     Wall *wShadow;
 
     QList<tetris*> tetrisList;
+    QList<tetris*> removeList;
 };
 
 #endif // GAMECONTROLLER_H

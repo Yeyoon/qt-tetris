@@ -3,10 +3,6 @@
 
 #include <QMainWindow>
 
-namespace Ui {
-class MainWindow;
-}
-
 class QGraphicsScene;
 class QGraphicsView;
 class GameController;
@@ -32,7 +28,6 @@ private:
     void initScene();
     void initSceneBackground();
 
-    Ui::MainWindow *ui;
     QGraphicsScene *scene;
     QGraphicsView *view;
 

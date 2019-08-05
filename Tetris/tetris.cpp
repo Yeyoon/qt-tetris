@@ -47,7 +47,7 @@ tetris::tetris(const Tetris_type &t, GameController *game, int unit_w):
         locationBits = 0x1111;
     }
 
-    speed = 5;
+    speed = 10;
 
     setPos(0,-100);
 
@@ -62,6 +62,11 @@ tetris::tetris(const Tetris_type &t, GameController *game, int unit_w):
            shapV.push_back(QRectF(xt,yt,unit_w,unit_w));
         }
     }
+}
+
+tetris::~tetris()
+{
+
 }
 
 QRectF tetris::boundingRect() const
@@ -157,7 +162,7 @@ void tetris::updatePosition1()
 {
     QPointF old_location = pos();
 
-    qDebug() << direction;
+    qDebug() << "updatePosition1 : " << direction;
     switch (direction) {
     case TETRIS_LEFT:
         moveLeft();
@@ -193,6 +198,8 @@ void tetris::updatePosition1()
     }else {
         setPos(location);
     }
+
+    qDebug() << "after updatePosition1 : " << this;
 }
 
 void tetris::advance(int step)
@@ -201,11 +208,17 @@ void tetris::advance(int step)
     if (tickCnt++ % speed)
         return;
 
+    if (tetrisState == TETRIS_STATE_DESTROY) {
+        qDebug() << "delete : " << this;
+        game->destroyTetris(this);
+        return;
+    }
+
     if (tetrisState == TETRIS_STATE_PAUSE)
         return;
 
-
     if (collidType & TETRIS_COLLIDING_DOWN) {
+        qDebug() << "advance before isLineComplete : " << this;
         game->isLineComplete(this,unit_w);
         game->stopTetris(this);
         tetrisState = TETRIS_STATE_PAUSE;
@@ -252,13 +265,15 @@ QList<QRectF> tetris::collectingRects()
     qreal x = location.x();
     qreal y = location.y();
 
-    for (int i = 0; i < shapV.size(); i++) {
-        QRectF r = QRectF(shapV[i]);
-        r.setX(x+r.x());
-        r.setY(y+r.y());
-        r.setHeight(shapV[i].height());
-        r.setWidth(shapV[i].width());
-        q.push_back(r);
+    for (int i = 0; i < 0xf; i++) {
+        if (locationBits & (1 << i)) {
+            int yl = i / TETRIS_W;
+            int xl = i % TETRIS_W;
+            qreal xt = x + xl * unit_w;
+            qreal yt = y + yl * unit_w;
+
+            q.push_back(QRectF(xt,yt,unit_w,unit_w));
+        }
     }
 
     return q;
@@ -329,6 +344,8 @@ bool tetris::handleColliding()
 {
     bool ret = false;
 
+    qDebug() << "this is : " << this;
+    qDebug() << "handleColliding";
     if (game->handleColliding(this)){
         if (1/*game->handleColliding1(this)*/) {
             switch (direction) {
@@ -349,6 +366,7 @@ bool tetris::handleColliding()
         }
     }
 
+    qDebug() << "after handle colliding : " << this;
     return ret;
 }
 
@@ -414,6 +432,7 @@ void tetris::updatePositionBits(unsigned int lbits)
 
 bool tetris::isEmpty()
 {
+    qDebug() << "isEmpty : " << (locationBits & 0xff);
     return !(locationBits & 0xff);
 }
 
@@ -433,7 +452,7 @@ void tetris::manualMoveWithHandleCollid(Tetris_Direction d)
     }
 
     setPos(location);
-    if (game->handleColliding(this) && collidType != TETRIS_COLLIDING_BOTTOM) {
+    if (game->handleColliding(this) /*&& collidType != TETRIS_COLLIDING_BOTTOM*/) {
         qDebug() << "manualMoveWithHandleCollid : " << true;
         qDebug() << "old_location : " << old_location;
         qDebug() << "new_location : " << location;
@@ -460,7 +479,17 @@ void tetris::change()
     newa[2] = !!(na[3] & 0x4) | (!!(na[2] & 0x4) << 1) | (!!(na[1] & 0x4) << 2) | (!!(na[0] & 0x4) << 3);
     newa[3] = !!(na[3] & 0x8) | (!!(na[2] & 0x8) << 1) | (!!(na[1] & 0x8) << 2) | (!!(na[0] & 0x8) << 3);
     qDebug() << "newa : " << newa[0] << "\t" << newa[1] << "\t" << newa[2] << "\t" << newa[3];
+
+    for (int i = 3; i >=0; --i) {
+        if (na[i] == 0) {
+            newa[0] >>= 1;
+            newa[1] >>= 1;
+            newa[2] >>= 1;
+            newa[3] >>= 1;
+        }
+    }
     new_x = newa[0] | (newa[1] << 4) | (newa[2] << 8) | (newa[3] << 12);
+
     updatePositionBits(new_x);
 
 

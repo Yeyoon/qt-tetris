@@ -39,6 +39,7 @@ typedef enum {
     TETRIS_STATE_RUN,
     TETRIS_STATE_PAUSE,
     TETRIS_STATE_RUN_ONECE,
+    TETRIS_STATE_DESTROY,
     TETRIS_STATE_NONE,
 }Tetris_State;
 
@@ -46,6 +47,7 @@ class tetris : public QGraphicsItem
 {
 public:
     tetris(const Tetris_type &t, GameController *game, int unit_w = 10);
+    ~tetris();
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
                QWidget *widget);

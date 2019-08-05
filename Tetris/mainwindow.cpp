@@ -10,14 +10,16 @@ const int TILE_SIZE = 10;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow),
     scene(new QGraphicsScene(this)),
     view(new QGraphicsView(scene,this)),
     game(new GameController(*scene,this))
 {
+    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setCentralWidget(view);
     setFixedSize(600, 600);
     setWindowIcon(QIcon(":/images/snake_ico"));
+
 
     createActions();
     createMenus();
@@ -31,7 +33,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    delete ui;
 }
 
 void MainWindow::adjustViewSize()
