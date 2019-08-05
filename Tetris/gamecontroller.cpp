@@ -109,6 +109,15 @@ void GameController::stopTetris(tetris* te)
     qDebug() << "stop tetris";
     //te->setStop(TETRIS_DOWN);
     pause();
+    if (te) {
+        if (isLineComplete(te,unit_w)) {
+            resume();
+            return;
+        }else {
+            te->setTetrisState(TETRIS_STATE_PAUSE);
+        }
+    }
+
     newTetris();
     qDebug() << "stop tetris after new";
     qDebug() << currentTetris;
@@ -143,7 +152,6 @@ void GameController::newTetris()
 
 bool GameController::handleColliding(tetris *cu)
 {
-    qDebug() << "handleColliding : " << cu;
     if (wall->collidesWithItem(cu)) {
         QPainterPath p1,p2, pin;
         p1 = cu->mapToScene(cu->shape());
@@ -156,8 +164,6 @@ bool GameController::handleColliding(tetris *cu)
         }
     }
 
-     qDebug() << "handleColliding : " << cu;
-     qDebug() << "tetrisList size : " << tetrisList.size();
     for (int i = 0; i < tetrisList.size(); i++){
         if (cu == tetrisList[i])
             continue;
@@ -170,9 +176,6 @@ bool GameController::handleColliding(tetris *cu)
 
             if (pin.elementCount() == 0)
                 continue;
-            qDebug() << "p1 is : " << p1;
-            qDebug() << "p2 is : " << p2;
-            qDebug() << "pin is : " << pin;
             return true;
         }
     }
@@ -187,7 +190,6 @@ bool GameController::checkLineCompleted(qreal y, int unit_w,tetris *te, QMap<tet
     int i;
     QRectF r;
 
-    qDebug() << "checkLineCompleted start for y : " << y;
     m.clear();
 
     if (y > 110) {
@@ -204,15 +206,11 @@ bool GameController::checkLineCompleted(qreal y, int unit_w,tetris *te, QMap<tet
         }
 
         if (i == tetrisList.size()) {
-            qDebug() << "te : " << te;
-            qDebug() << "r : " << r;
-
             if (te->collidingWithQRectF(r)){
                 m[te].push_back(r);
                 continue;
             }
 
-            qDebug() << "not completed at rect : " << r;
             return false;
         }
     }
@@ -232,7 +230,6 @@ bool GameController::isLineComplete(tetris* te, int unit_w)
     for (yx = y; yx < y + b.height(); yx += unit_w) {
         if (checkLineCompleted(yx,unit_w,te,m))
             break;
-        qDebug() << "checkLineCompleted Fail for y : " << yx;
     }
 
     if ((int)yx == (int)(y + b.height()))

@@ -142,11 +142,6 @@ void tetris::updatePosition()
         // real colliding
         setPos(old_location);
         location = old_location;
-
-        qDebug() << "real colliding" << tetrisState;
-        qDebug() << "collid type : " << collidType;
-        qDebug() << "pos : " << pos();
-        qDebug() << "location : " << location;
     }else {
         setPos(location);
     }
@@ -165,9 +160,11 @@ void tetris::advance(int step)
 
     if (collidType & TETRIS_COLLIDING_DOWN) {
         qDebug() << "advance before isLineComplete : " << this;
-        game->isLineComplete(this,unit_w);
+       // if (game->isLineComplete(this,unit_w))
+       //     return;
+
         game->stopTetris(this);
-        tetrisState = TETRIS_STATE_PAUSE;
+        //tetrisState = TETRIS_STATE_PAUSE;
     }
 
 
@@ -223,11 +220,10 @@ QList<QRectF> tetris::collectingRects()
 bool tetris::collidingWithQRectF(const QRectF &r)
 {
     QList<QRectF> head = this->collectingRects();
-    qDebug() << "r is : " << r;
+
     for (int i = 0; i < head.size(); i++){
         if (r.intersects(head[i]))
             return true;
-        qDebug() << " i : " << i << "\t" << head[i];
     }
 
     return false;
@@ -247,8 +243,6 @@ bool tetris::handleColliding()
 {
     bool ret = false;
 
-    qDebug() << "this is : " << this;
-    qDebug() << "handleColliding";
     if (game->handleColliding(this)){
         switch (direction) {
         case TETRIS_DOWN:
@@ -268,7 +262,6 @@ bool tetris::handleColliding()
 
     }
 
-    qDebug() << "after handle colliding : " << this;
     return ret;
 }
 
