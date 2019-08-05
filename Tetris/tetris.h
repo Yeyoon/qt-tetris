@@ -46,7 +46,7 @@ typedef enum {
 class tetris : public QGraphicsItem
 {
 public:
-    tetris(const Tetris_type &t, GameController *game, int unit_w = 10);
+    tetris(const Tetris_type &t, GameController *game, int unit_w = 10, QPointF location = QPointF(-40,-90));
     ~tetris();
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,

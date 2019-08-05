@@ -8,27 +8,18 @@
 #include "tetris.h"
 #include "wall.h"
 
-GameController::GameController(QGraphicsScene &scene, QObject *parent) :
+GameController::GameController(QGraphicsScene &scene, QObject *parent,QPointF p, int unit_w) :
     QObject(parent),
     scene(scene),
+    wallLeftPoint(p),
+    unit_w(unit_w),
     currentTetris(nullptr),
     isPause(false)
 {
     timer.start( 1000/33 );
+    wall = new Wall(p.x(),p.y(),120,220,unit_w);
 
-    wTop = new Wall(-100,-100,200,10);
-    wLeft = new Wall(-100,-100,10,200);
-    wRight = new Wall(90,-100,10,200);
-    wBottom = new Wall(-100,90,200,10);
-
-    wShadow = new Wall(-90,80,180,10,Qt::lightGray);
-
-    scene.addItem(wTop);
-    scene.addItem(wLeft);
-    scene.addItem(wRight);
-    scene.addItem(wBottom);
-    scene.addItem(wShadow);
-
+    scene.addItem(wall);
     stopTetris(nullptr);
 
     scene.installEventFilter(this);
@@ -143,7 +134,9 @@ void GameController::newTetris()
     Tetris_type ty = (Tetris_type)(TETRIS_TYPE_1 + (qrand() % TETRIS_TYPE_END));
 
     currentTetris = new tetris(ty,
-                               this);
+                               this,
+                               unit_w,
+                               QPointF(-50,-90));
     currentTetris->setDirection(TETRIS_NONE);
     scene.addItem(currentTetris);
 }
@@ -151,15 +144,16 @@ void GameController::newTetris()
 bool GameController::handleColliding(tetris *cu)
 {
     qDebug() << "handleColliding : " << cu;
-    if (wTop->collidesWithItem(cu)) {
-        gameOver();
-        return true;
-    }
+    if (wall->collidesWithItem(cu)) {
+        QPainterPath p1,p2, pin;
+        p1 = cu->mapToScene(cu->shape());
+        p2 = wall->mapToScene(wall->shape());
 
-    if (wBottom->collidesWithItem(cu)) {
-        cu->setCollidType(TETRIS_COLLIDING_BOTTOM);
-         qDebug() << "handleColliding with wBottom: " << cu;
-        return true;
+        pin = p1.intersected(p2);
+        if (pin.elementCount() > 0) {
+            qDebug() << "hit the wall intersected : " << pin;
+            return true;
+        }
     }
 
      qDebug() << "handleColliding : " << cu;
@@ -183,10 +177,6 @@ bool GameController::handleColliding(tetris *cu)
         }
     }
 
-    if (wLeft->collidesWithItem(cu) || wRight->collidesWithItem(cu)){
-        return true;
-    }
-
     return false;
 }
 
@@ -198,17 +188,13 @@ bool GameController::checkLineCompleted(qreal y, int unit_w,tetris *te, QMap<tet
 
     qDebug() << "checkLineCompleted start for y : " << y;
     m.clear();
+
+    if (y >= 100) {
+        // here is the bottom;
+        return false;
+    }
     for (; x < 90; x+= unit_w){
         r = QRectF(x,y,unit_w,unit_w);
-        QPainterPath path;
-        path.addRect(r);
-        path = wBottom->mapToScene(path);
-
-        if (wBottom->collidesWithPath(path)) {
-            qDebug() << "bottom collid with path : " << path;
-            return false;
-        }
-
         for (i = 0; i < tetrisList.size(); i++) {
             if (tetrisList[i]->collidingWithQRectF(r)){
                 m[tetrisList[i]].push_back(r);

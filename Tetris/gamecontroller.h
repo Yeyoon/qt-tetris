@@ -16,7 +16,7 @@ class GameController : public QObject
 {
     Q_OBJECT
 public:
-    GameController(QGraphicsScene &scene, QObject *parent = nullptr);
+    GameController(QGraphicsScene &scene, QObject *parent = nullptr,QPointF p = QPointF(-100,-100), int unit_w = 10);
     ~GameController();
 
 //    void snakeHitWall(Snake *snake, Wall *wall);
@@ -45,16 +45,13 @@ private:
 
     QTimer timer;
     QGraphicsScene &scene;
-
+    QPointF wallLeftPoint;
+    int unit_w;
     tetris *currentTetris;
     bool isPause;
 
-    Wall *wTop;
-    Wall *wLeft;
-    Wall *wRight;
-    Wall *wBottom;
+    Wall *wall;
 
-    Wall *wShadow;
 
     QList<tetris*> tetrisList;
     QList<tetris*> removeList;

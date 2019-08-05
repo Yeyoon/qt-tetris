@@ -14,10 +14,11 @@ MainWindow::MainWindow(QWidget *parent) :
     view(new QGraphicsView(scene,this)),
     game(new GameController(*scene,this))
 {
-    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    int w = 600, h = 600;
+    //view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    //view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setCentralWidget(view);
-    setFixedSize(600, 600);
+    setFixedSize(w, h);
     setWindowIcon(QIcon(":/images/snake_ico"));
 
 
@@ -37,7 +38,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::adjustViewSize()
 {
-    view->fitInView(scene->sceneRect(), Qt::KeepAspectRatioByExpanding);
+    view->fitInView(scene->sceneRect(),Qt::IgnoreAspectRatio/* Qt::KeepAspectRatioByExpanding*/);
 }
 
 void MainWindow::createActions()
@@ -92,7 +93,7 @@ void MainWindow::createMenus()
 
 void MainWindow::initScene()
 {
-    scene->setSceneRect(-100, -100, 200, 200);
+    scene->setSceneRect(-100, -100, 220, 220);
 }
 
 void MainWindow::initSceneBackground()
@@ -102,7 +103,7 @@ void MainWindow::initSceneBackground()
     p.setBrush(QBrush(Qt::lightGray));
     p.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
 
-    view->setBackgroundBrush(QBrush(bg));
+    //view->setBackgroundBrush(QBrush(bg));
 }
 
 void MainWindow::newGame()

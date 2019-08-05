@@ -7,16 +7,14 @@
 const int BOXSIZE = 10;
 const int TETRIS_W = 4;
 
-tetris::tetris(const Tetris_type &t, GameController *game, int unit_w):
-    location(QPointF(0,-90)),
+tetris::tetris(const Tetris_type &t, GameController *game, int unit_w, QPointF location):
+    location(location),
     myType(t),
-    isStop(TETRIS_UP),
     game(game),
     tetrisState(TETRIS_STATE_RUN),
     collidType(0),
     direction(TETRIS_DOWN),
-    unit_w(unit_w),
-    shrink_size(0)
+    unit_w(unit_w)
 {
     Qt::GlobalColor colors[] = {Qt::red,Qt::yellow,Qt::blue,Qt::green,Qt::darkYellow,Qt::cyan,Qt::magenta};
     myColor = colors[myType % TETRIS_TYPE_END];

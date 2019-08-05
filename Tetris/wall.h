@@ -8,7 +8,7 @@
 class Wall : public QGraphicsItem
 {
 public:
-    Wall(qreal x, qreal y, qreal width, qreal height, Qt::GlobalColor color = Qt::blue);
+    Wall(qreal x, qreal y, qreal width, qreal height, qreal thick = 10, Qt::GlobalColor color = Qt::lightGray);
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
                QWidget *widget);
@@ -20,6 +20,7 @@ private:
     qreal y;
     qreal w;
     qreal h;
+    qreal thick;
 
     Qt::GlobalColor c;
 };
