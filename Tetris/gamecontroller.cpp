@@ -125,7 +125,7 @@ void GameController::stopTetris(tetris* te)
         return;
 
     if (handleColliding(currentTetris)){
-        gameOver();
+        QTimer::singleShot(0,this,SLOT(gameOver()));
     }else {
         currentTetris->setDirection(TETRIS_DOWN);
         resume();
@@ -283,9 +283,3 @@ bool GameController::isLineComplete(tetris* te, int unit_w)
     return true;
 }
 
-void GameController::destroyTetris(tetris *destroy)
-{
-    qDebug() << "destroyTetris : " << destroy << "\t currentTetris is : " << currentTetris;
-    if (destroy)
-        delete destroy;
-}

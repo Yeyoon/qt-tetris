@@ -28,8 +28,6 @@ public:
     bool handleColliding(tetris *te);
     bool isLineComplete(tetris *te, int unit_w);
 
-    void destroyTetris(tetris *destroy);
-
 public slots:
     void pause();
     void resume();

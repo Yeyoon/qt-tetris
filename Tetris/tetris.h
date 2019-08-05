@@ -59,27 +59,24 @@ public:
     void moveDown();
     void moveUp();
 
-    void setStop(Tetris_Direction s);
     void setDirection(Tetris_Direction d);
 
-    Tetris_Direction willCollidingWithTetris(tetris *other);
     QList<QRectF> collectingRects();
     bool collidingWithQRectF(const QRectF &r);
 
-    bool isStopped();
     void setCollidType(Tetris_Collid type);
     bool handleColliding();
-    void shrink(int size);
+
     void clearRectF(QRectF &r);
     void setTetrisState(Tetris_State s);
     bool isEmpty();
-    void change();
+
 
     void manualMoveWithHandleCollid(Tetris_Direction d);
 private:
     void updatePosition();
-    void updatePosition1();
     void updatePositionBits(unsigned int new_pbits);
+    void change();
 
     QPointF location;
     Tetris_type myType;
@@ -87,17 +84,11 @@ private:
     unsigned int locationBits;
     unsigned int tickCnt;
     unsigned int speed;
-    bool isStop;
     GameController *game;
-
-    QList<QRectF> shapV;
-
     Tetris_State  tetrisState;
     int collidType;
     Tetris_Direction direction;
-
     int unit_w;
-    int shrink_size;
 };
 
 #endif // TETRIS_H

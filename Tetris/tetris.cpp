@@ -49,19 +49,7 @@ tetris::tetris(const Tetris_type &t, GameController *game, int unit_w):
 
     speed = 10;
 
-    setPos(0,-100);
-
-    for (int i = 0; i < 0xf; i++){
-        if (locationBits & (1 << i)) {
-           int yl = i / TETRIS_W;
-           int xl = i % TETRIS_W;
-
-           qreal xt =  xl * unit_w;
-           qreal yt =  yl * unit_w;
-
-           shapV.push_back(QRectF(xt,yt,unit_w,unit_w));
-        }
-    }
+    setPos(location);
 }
 
 tetris::~tetris()
@@ -123,46 +111,12 @@ QPainterPath tetris::shape() const
     return path;
 }
 
+
 void tetris::updatePosition()
 {
     QPointF old_location = pos();
-    qDebug() << "updatePosition : direction " << direction;
-    qDebug() << "pos is : " << old_location;
-    qDebug() << "loc before move " << location;
-    switch (direction) {
-    case TETRIS_LEFT:
-        if (!(collidType & TETRIS_COLLIDING_LEFT)){
-            moveLeft();
-            collidType = (Tetris_Collid)(collidType & (~TETRIS_COLLIDING_RIGHT));
-        }
-        break;
-    case TETRIS_RIGHT:
-        if (!(collidType & TETRIS_COLLIDING_RIGHT)){
-            moveRight();
-            collidType = (Tetris_Collid)(collidType & (~TETRIS_COLLIDING_LEFT));
-        }
-        break;
-    case TETRIS_DOWN:
-        if (!(collidType & TETRIS_COLLIDING_DOWN))
-            moveDown();
-        break;
-    case TETRIS_NONE:
-        return;
-    default:
-        break;
-    }
-    setPos(location);
 
-    collidType = game->handleColliding(this);
-
-    direction = TETRIS_DOWN;
-}
-
-void tetris::updatePosition1()
-{
-    QPointF old_location = pos();
-
-    qDebug() << "updatePosition1 : " << direction;
+    qDebug() << "updatePosition : " << direction;
     switch (direction) {
     case TETRIS_LEFT:
         moveLeft();
@@ -199,7 +153,7 @@ void tetris::updatePosition1()
         setPos(location);
     }
 
-    qDebug() << "after updatePosition1 : " << this;
+    qDebug() << "after updatePosition : " << this;
 }
 
 void tetris::advance(int step)
@@ -207,12 +161,6 @@ void tetris::advance(int step)
     if (!step) return;
     if (tickCnt++ % speed)
         return;
-
-    if (tetrisState == TETRIS_STATE_DESTROY) {
-        qDebug() << "delete : " << this;
-        game->destroyTetris(this);
-        return;
-    }
 
     if (tetrisState == TETRIS_STATE_PAUSE)
         return;
@@ -225,33 +173,28 @@ void tetris::advance(int step)
     }
 
 
-    updatePosition1();
+    updatePosition();
     direction = TETRIS_DOWN;
-}
-
-void tetris::setStop(Tetris_Direction s)
-{
-    isStop = s;
 }
 
 void tetris::moveLeft()
 {
-    location.rx() -= BOXSIZE;
+    location.rx() -= unit_w;
 }
 
 void tetris::moveDown()
 {
-    location.ry() += BOXSIZE;
+    location.ry() += unit_w;
 }
 
 void tetris::moveRight()
 {
-    location.rx() += BOXSIZE;
+    location.rx() += unit_w;
 }
 
 void tetris::moveUp()
 {
-    location.ry() -= BOXSIZE;
+    location.ry() -= unit_w;
 }
 
 void tetris::setDirection(Tetris_Direction d)
@@ -277,46 +220,6 @@ QList<QRectF> tetris::collectingRects()
     }
 
     return q;
-}
-
-Tetris_Direction tetris::willCollidingWithTetris(tetris *other)
-{
-    QList<QRectF> q = collectingRects();
-    QList<QRectF> p = other->collectingRects();
-
-    //qDebug() << "q : " << q;
-   // qDebug() << "p : " << p;
-    for (int i = 0; i < q.size(); i++) {
-        QRectF xp = QRectF(q[i]);
-        QRectF lp = QRectF(q[i]);
-        QRectF rp = QRectF(q[i]);
-        xp.setHeight(xp.height() + 1);
-        lp.moveTo(xp.x()-1,xp.y());
-        rp.setWidth(rp.width() + 1);
-
-        for (int j = 0; j < p.size(); j++) {
-            QRectF yp = p[j];
-            yp.setHeight(yp.height()+1);
-
-            if (xp.intersects(yp))
-                return TETRIS_DOWN;
-
-            yp = p[j];
-
-            if (lp.intersects(yp))
-                return TETRIS_LEFT;
-
-            if (rp.intersects(yp))
-                return TETRIS_RIGHT;
-        }
-    }
-
-    return TETRIS_NONE;
-}
-
-bool tetris::isStopped()
-{
-    return tetrisState == TETRIS_STATE_PAUSE;
 }
 
 bool tetris::collidingWithQRectF(const QRectF &r)
@@ -347,32 +250,26 @@ bool tetris::handleColliding()
     qDebug() << "this is : " << this;
     qDebug() << "handleColliding";
     if (game->handleColliding(this)){
-        if (1/*game->handleColliding1(this)*/) {
-            switch (direction) {
-            case TETRIS_DOWN:
-                collidType = TETRIS_COLLIDING_DOWN;
-                break;
-            case TETRIS_LEFT:
-                collidType = TETRIS_COLLIDING_LEFT;
-                break;
-            case TETRIS_RIGHT:
-                collidType = TETRIS_COLLIDING_RIGHT;
-                break;
-            default:
-                collidType = TETRIS_COLLIDING_DOWN;
+        switch (direction) {
+        case TETRIS_DOWN:
+            collidType = TETRIS_COLLIDING_DOWN;
+            break;
+        case TETRIS_LEFT:
+            collidType = TETRIS_COLLIDING_LEFT;
+            break;
+        case TETRIS_RIGHT:
+            collidType = TETRIS_COLLIDING_RIGHT;
+            break;
+        default:
+            collidType = TETRIS_COLLIDING_DOWN;
 
-            }
-            ret = true;
         }
+        ret = true;
+
     }
 
     qDebug() << "after handle colliding : " << this;
     return ret;
-}
-
-void tetris::shrink(int size)
-{
-   // shrink_size += size;
 }
 
 void tetris::clearRectF(QRectF &r)
@@ -388,13 +285,6 @@ void tetris::clearRectF(QRectF &r)
                 QRectF rt = QRectF(xt,yt,unit_w,unit_w);
                 QRectF inter = r.intersected(rt);
                 if (inter.isValid()){
-                    if ((locationBits == 113 && i == 1) || myType == TETRIS_TYPE_7) {
-                        qDebug() << "rt is : " << rt;
-                        qDebug() << "r is : " << r;
-                        qDebug() << "inter is : " << inter;
-                        qDebug() << "locationbits : " << locationBits;
-                        qDebug() << "i is : " << i;
-                    }
                     updatePositionBits(locationBits & (~(1 << i)));
                     return;
                 }
