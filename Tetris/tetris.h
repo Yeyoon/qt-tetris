@@ -80,6 +80,7 @@ private:
     void updatePositionBits(unsigned int new_pbits);
     void change();
 
+
     QPointF location;
     Tetris_type myType;
     Qt::GlobalColor myColor;

@@ -342,47 +342,56 @@ void tetris::manualMoveWithHandleCollid(Tetris_Direction d)
     }
 
     setPos(location);
-    if (game->handleColliding(this) /*&& collidType != TETRIS_COLLIDING_BOTTOM*/) {
-        qDebug() << "manualMoveWithHandleCollid : " << true;
-        qDebug() << "old_location : " << old_location;
-        qDebug() << "new_location : " << location;
+    if (game->handleColliding(this)) {
         location = old_location;
         setPos(location);
     }
 }
 
+/**
+ * @brief tetris::change
+ * this function will do 90'c change
+ */
 void tetris::change()
 {
     unsigned int old_pbits = locationBits;
-    unsigned int new_x = 0;
-    unsigned int na[4] = {0};
-    unsigned int newa[4] = {0};
+    unsigned int new_pbits = 0;
 
-    for (int i = 0; i < 4; i++) {
-        na[i] = old_pbits & 0xf;
-        old_pbits >>= 4;
-    }
+    /* As a[i,j] will changed to a[j,N-(i+1)].
+     * Here N is the square Array SIZE 4
+     */
+    for (unsigned int i = 0; i < 4; i++)
+        for (unsigned int j = 0; j < 4; j++) {
+            unsigned int old_position = 4 * i + j;
+            unsigned int new_position = j * 4 + 4 - (i + 1);
 
- newa[0] = !!(na[3] & 0x1) | (!!(na[2] & 0x1) << 1) | (!!(na[1] & 0x1) << 2) | (!!(na[0] & 0x1) << 3);
-    newa[1] = !!(na[3] & 0x2) | (!!(na[2] & 0x2) << 1) | (!!(na[1] & 0x2) << 2) | (!!(na[0] & 0x2) << 3);
-    newa[2] = !!(na[3] & 0x4) | (!!(na[2] & 0x4) << 1) | (!!(na[1] & 0x4) << 2) | (!!(na[0] & 0x4) << 3);
-    newa[3] = !!(na[3] & 0x8) | (!!(na[2] & 0x8) << 1) | (!!(na[1] & 0x8) << 2) | (!!(na[0] & 0x8) << 3);
-
-
-    for (int i = 3; i >=0; --i) {
-        if (na[i] == 0) {
-            newa[0] >>= 1;
-            newa[1] >>= 1;
-            newa[2] >>= 1;
-            newa[3] >>= 1;
+            if (old_pbits & (1 << old_position)) {
+                new_pbits |= (1 << new_position);
+            }
         }
+
+    /**
+     * for matrix like this
+     * [ 0 1 1 1              [ 0 0 0 0
+     *   0 0 0 1    ----->      0 0 0 1
+     *   0 0 0 0                0 0 0 1
+     *   0 0 0 0 ]              0 0 1 1 ]
+     * will be translated to
+     * [ 0 0 0 0
+     *   0 1 0 0
+     *   0 1 0 0
+     *   1 1 0 0 ]
+     * for the first line empty bits. It will be deleted in func updatePositionBits.
+     * */
+    for (int i = 0; i < 4 ; i++){
+        int p = (new_pbits & 0x1) | (new_pbits & 0x10) | (new_pbits & 0x100) | (new_pbits & 0x1000);
+        if (p)
+            break;
+
+        new_pbits = ((new_pbits & 0xf) >> 1) | ((new_pbits & 0xf0) >> 1) | ((new_pbits & 0xf00) >> 1) | ((new_pbits & 0xf000) >> 1);
     }
-    new_x = newa[0] | (newa[1] << 4) | (newa[2] << 8) | (newa[3] << 12);
 
-    updatePositionBits(new_x);
-
-
-    qDebug() << "change new lbits: " << new_x;
+    updatePositionBits(new_pbits);
 }
 
 void tetris::setlocation(QPointF loc)
