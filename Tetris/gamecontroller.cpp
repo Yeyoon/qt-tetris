@@ -8,20 +8,35 @@
 #include "tetris.h"
 #include "wall.h"
 
+
 GameController::GameController(QGraphicsScene &scene, QObject *parent,QPointF p, int unit_w) :
     QObject(parent),
     scene(scene),
     wallLeftPoint(p),
     unit_w(unit_w),
     currentTetris(nullptr),
-    isPause(false)
+    isPause(false),
+    totalTetrisCnt(0),
+    totalLineCompleteNum(0)
 {
     timer.start( 1000/33 );
+
+    text = scene.addText(tr("SCORE BOARD:\nTotal Tetris:\t0\nScored:\t0\n"));
+    text->setPos(40,40);
+    text->setScale(0.6);
+
+
+    QPen pen(Qt::LinearGradientPattern);
+    pen.setColor(Qt::blue);
+    pen.setWidth(1);
+    pen.setStyle(Qt::DashDotDotLine);
+    scene.addLine(20,0,220,0,pen);
+
     wall = new Wall(p.x(),p.y(),120,220,unit_w);
-
     scene.addItem(wall);
-    stopTetris(nullptr);
 
+    nextTetris = getRandomTetris();
+    stopTetris(nullptr);
     scene.installEventFilter(this);
 
     resume();
@@ -111,6 +126,7 @@ void GameController::stopTetris(tetris* te)
     pause();
     if (te) {
         if (isLineComplete(te,unit_w)) {
+            ++totalLineCompleteNum;
             resume();
             return;
         }else {
@@ -119,6 +135,8 @@ void GameController::stopTetris(tetris* te)
     }
 
     newTetris();
+
+    text->setPlainText(generScoreText());
     qDebug() << "stop tetris after new";
     qDebug() << currentTetris;
     if (!currentTetris)
@@ -134,20 +152,42 @@ void GameController::stopTetris(tetris* te)
     qDebug() << "end stop tetris";
 }
 
+tetris* GameController::getRandomTetris()
+{
+    Tetris_type ty = (Tetris_type)(TETRIS_TYPE_1 + (qrand() % TETRIS_TYPE_END));
+
+    tetris* new_te = new tetris(ty,
+                               this,
+                               unit_w,
+                               QPointF(60,-60));
+    if (new_te == nullptr)
+        return nullptr;
+
+    new_te->setDirection(TETRIS_NONE);
+    new_te->setTetrisState(TETRIS_STATE_PAUSE);
+    scene.addItem(new_te);
+
+    return new_te;
+}
+
 void GameController::newTetris()
 {
     qDebug() << "newTetris";
 
     if (currentTetris != nullptr)
         tetrisList.push_back(currentTetris);
-    Tetris_type ty = (Tetris_type)(TETRIS_TYPE_1 + (qrand() % TETRIS_TYPE_END));
 
-    currentTetris = new tetris(ty,
-                               this,
-                               unit_w,
-                               QPointF(-50,-90));
-    currentTetris->setDirection(TETRIS_NONE);
-    scene.addItem(currentTetris);
+    currentTetris = nextTetris;
+    nextTetris = getRandomTetris();
+
+    if (currentTetris) {
+        currentTetris->setlocation(QPointF(-50,-90));
+        currentTetris->setDirection(TETRIS_DOWN);
+        currentTetris->setTetrisState(TETRIS_STATE_RUN);
+        scene.addItem(currentTetris);
+
+        ++totalTetrisCnt;
+    }
 }
 
 bool GameController::handleColliding(tetris *cu)
@@ -269,5 +309,16 @@ bool GameController::isLineComplete(tetris* te, int unit_w)
 
     QTimer::singleShot(0,this,SLOT(removeTetris));
     return true;
+}
+
+QString GameController::generScoreText()
+{
+    QString text_str = QString(tr("SCORE BOARD:\nTotal Tetris:\t")) +
+            QString::number(totalTetrisCnt) +
+            QString("\nScore:\t") +
+            QString::number(totalLineCompleteNum) +
+            QString("\n");
+
+    return text_str;
 }
 

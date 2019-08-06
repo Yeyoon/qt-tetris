@@ -57,7 +57,7 @@ tetris::~tetris()
 
 QRectF tetris::boundingRect() const
 {
-    QPointF temp = mapFromScene(location);
+    QPointF temp = mapFromScene(pos());
     qreal x = temp.x();
     qreal y = temp.y();
     if (myType == TETRIS_TYPE_1)
@@ -88,7 +88,7 @@ QPainterPath tetris::shape() const
     QPainterPath path;
     path.setFillRule(Qt::WindingFill);
 
-    QPointF temp = mapFromScene(location);
+    QPointF temp = mapFromScene(pos());
     qreal x = temp.x();
     qreal y = temp.y();
 
@@ -378,3 +378,10 @@ void tetris::change()
 
     qDebug() << "change new lbits: " << new_x;
 }
+
+void tetris::setlocation(QPointF loc)
+{
+    location = loc;
+    setPos(location);
+}
+

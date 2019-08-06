@@ -12,6 +12,7 @@ class tetris;
 class Wall;
 
 
+
 class GameController : public QObject
 {
     Q_OBJECT
@@ -44,17 +45,22 @@ private:
     void addNewFood();
 
     bool checkLineCompleted(qreal y,int unit_w,tetris *te, QMap<tetris*,QList<QRectF>> &m);
-
+    QString generScoreText();
+    tetris* getRandomTetris();
 
     QTimer timer;
     QGraphicsScene &scene;
     QPointF wallLeftPoint;
+    QGraphicsTextItem *text;
     int unit_w;
     tetris *currentTetris;
+    tetris *nextTetris;
     bool isPause;
 
     Wall *wall;
 
+    int totalTetrisCnt;
+    int totalLineCompleteNum;
 
     QList<tetris*> tetrisList;
     QList<tetris*> removeList;

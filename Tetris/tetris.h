@@ -70,9 +70,10 @@ public:
     void clearRectF(QRectF &r);
     void setTetrisState(Tetris_State s);
     bool isEmpty();
-
-
     void manualMoveWithHandleCollid(Tetris_Direction d);
+
+    void setlocation(QPointF loc);
+
 private:
     void updatePosition();
     void updatePositionBits(unsigned int new_pbits);
