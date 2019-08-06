@@ -113,8 +113,10 @@ QPainterPath tetris::shape() const
 void tetris::updatePosition()
 {
     QPointF old_location = pos();
+    unsigned int old_pbits = locationBits;
 
     qDebug() << "updatePosition : " << direction;
+    qDebug() << "locationBits : " << locationBits;
     switch (direction) {
     case TETRIS_LEFT:
         moveLeft();
@@ -127,8 +129,7 @@ void tetris::updatePosition()
         break;
     case TETRIS_CHANGE:
         change();
-        direction = TETRIS_DOWN;
-        return;
+        break;
     case TETRIS_NONE:
         return;
     default:
@@ -142,11 +143,14 @@ void tetris::updatePosition()
         // real colliding
         setPos(old_location);
         location = old_location;
+        locationBits = old_pbits;
     }else {
         setPos(location);
     }
 
+    direction = TETRIS_DOWN;
     qDebug() << "after updatePosition : " << this;
+    qDebug() << "locationBits : " << locationBits;
 }
 
 void tetris::advance(int step)
@@ -254,6 +258,9 @@ bool tetris::handleColliding()
         case TETRIS_RIGHT:
             collidType = TETRIS_COLLIDING_RIGHT;
             break;
+        case TETRIS_CHANGE:
+            collidType = TETRIS_COLLIDING_CHANGE;
+            break;
         default:
             collidType = TETRIS_COLLIDING_DOWN;
 
@@ -355,13 +362,12 @@ void tetris::change()
         na[i] = old_pbits & 0xf;
         old_pbits >>= 4;
     }
- qDebug() << "change old lbits: " << locationBits;
- qDebug() << "na : " << na[0] << " " << na[1] << " " << na[2] << " " << na[3];
+
  newa[0] = !!(na[3] & 0x1) | (!!(na[2] & 0x1) << 1) | (!!(na[1] & 0x1) << 2) | (!!(na[0] & 0x1) << 3);
     newa[1] = !!(na[3] & 0x2) | (!!(na[2] & 0x2) << 1) | (!!(na[1] & 0x2) << 2) | (!!(na[0] & 0x2) << 3);
     newa[2] = !!(na[3] & 0x4) | (!!(na[2] & 0x4) << 1) | (!!(na[1] & 0x4) << 2) | (!!(na[0] & 0x4) << 3);
     newa[3] = !!(na[3] & 0x8) | (!!(na[2] & 0x8) << 1) | (!!(na[1] & 0x8) << 2) | (!!(na[0] & 0x8) << 3);
-    qDebug() << "newa : " << newa[0] << "\t" << newa[1] << "\t" << newa[2] << "\t" << newa[3];
+
 
     for (int i = 3; i >=0; --i) {
         if (na[i] == 0) {
